@@ -1,13 +1,14 @@
 ﻿@page "/weather"
 @inject HttpClient Http
+@using System.Text.Json
 
 <PageTitle>Weather</PageTitle>
 
 <h1>Weather</h1>
 
-<p>This component demonstrates fetching data from the server.</p>
+<p>This component demonstrates fetching data from an API.</p>
 
-@if (forecasts == null)
+@if (current == null)
 {
     <p><em>Loading...</em></p>
 }
@@ -16,6 +17,7 @@ else
     <table class="table">
         <thead>
             <tr>
+                <th>City</th>
                 <th>Date</th>
                 <th>Temp. (F)</th>
                 <th>Apparent Temp. (F)</th>
@@ -23,21 +25,21 @@ else
                 <th>Rain</th>
                 <th>Showers</th>
                 <th>Snowfall</th>
-                <th>Precipataion</th>
+                <th>Precipitation</th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var forecast in forecasts)
             {
                 <tr>
-                    <td>@forecast.Date.ToShortDateString()</td>
-                    <td>@forecast.TemperatureF</td>
-                    <td>@forecast.ApparentTemperature</td>
-                    <td>@forecast.isDay</td>
-                    <td>@forecast.Rain</td>
-                    <td>@forecast.Showers</td>
-                    <td>@forecast.Snowfall</td>
-                    <td>@forecast.Precipataion</td>
+                    <td>@city</td>
+                    <td>@current.Value.GetProperty("time").GetString()</td>
+                    <td>@current.Value.GetProperty("temperature_2m").GetDouble()</td>
+                    <td>@current.Value.GetProperty("apparent_temperature").GetDouble()</td>
+                    <td>@current.Value.GetProperty("is_day").GetInt32()</td>
+                    <td>@current.Value.GetProperty("rain").GetDouble()</td>
+                    <td>@current.Value.GetProperty("showers").GetDouble()</td>
+                    <td>@current.Value.GetProperty("snowfall").GetDouble()</td>
+                    <td>@current.Value.GetProperty("precipitation").GetDouble()</td>
                 </tr>
             }
         </tbody>
@@ -45,28 +47,27 @@ else
 }
 
 @code {
-    private WeatherForecast[]? forecasts;
+    private JsonElement? current;
+    private JsonElement data;
+    private string? city;
 
     protected override async Task OnInitializedAsync()
     {
-        forecasts = await Http.GetFromJsonAsync<WeatherForecast[]>("https://api.open-meteo.com/v1/forecast?latitude=43.39&longitude=70.15&current=temperature_2m,apparent_temperature,is_day,precipitation,rain,showers,snowfall&wind_speed_unit=mph&temperature_unit=fahrenheit&precipitation_unit=inch");
-    }
+        var stream = await Http.GetStreamAsync("https://api.open-meteo.com/v1/forecast?latitude=46.82&longitude=-67.9231&current=temperature_2m,apparent_temperature,is_day,precipitation,rain,showers,snowfall&wind_speed_unit=mph&temperature_unit=fahrenheit&precipitation_unit=inch");
+        var doc = await JsonDocument.ParseAsync(stream);
+        data = doc.RootElement;
+        current = doc.RootElement.GetProperty("current");
 
-    public class WeatherForecast
-    {
-        public int temperature_2m { get; set; }
-
-        public int apparent_temperature { get; set; }
-
-        public bool is_day { get; set; }
-
-        public int precipataion { get; set; }
-
-        public int rain { get; set; }
-
-        public bool showers { get; set; }
-
-        public int snowfall { get; set; }
+        var lat = data.GetProperty("latitude").GetDouble();
+        var lon = data.GetProperty("longitude").GetDouble();
+        var url = $"https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lon}";
+        var response = await Http.GetFromJsonAsync<GeoCodingResponse>(url);
+        city = response.display_name;
 
     }
+        public class GeoCodingResponse  // <-- Fix 4
+        {
+        public string? display_name { get; set; }
+        }
+
 }
