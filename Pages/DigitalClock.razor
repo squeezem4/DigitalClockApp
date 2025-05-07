@@ -1,0 +1,29 @@
+@page "/clock"
+
+<h1 style="text-align:center; font-family:sans-serif;">Digital Clock</h1>
+<h2 style="text-align:center; font-size:4em;">@currentTime</h2>
+
+@code {
+    private string currentTime = DateTime.Now.ToString("HH:mm:ss");
+    private System.Threading.Timer? _timer;
+
+    protected override void OnInitialized()
+    {
+        _timer = new System.Threading.Timer(UpdateClock, null, 0, 1000);
+    }
+
+    private void UpdateClock(object? state)
+    {
+        // Use InvokeAsync to marshal back to UI thread
+        InvokeAsync(() =>
+        {
+            currentTime = DateTime.Now.ToString("HH:mm:ss");
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        _timer?.Dispose();
+    }
+}

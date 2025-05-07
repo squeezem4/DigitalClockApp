@@ -17,9 +17,13 @@ else
         <thead>
             <tr>
                 <th>Date</th>
-                <th>Temp. (C)</th>
                 <th>Temp. (F)</th>
-                <th>Summary</th>
+                <th>Apparent Temp. (F)</th>
+                <th>Day</th>
+                <th>Rain</th>
+                <th>Showers</th>
+                <th>Snowfall</th>
+                <th>Precipataion</th>
             </tr>
         </thead>
         <tbody>
@@ -27,9 +31,13 @@ else
             {
                 <tr>
                     <td>@forecast.Date.ToShortDateString()</td>
-                    <td>@forecast.TemperatureC</td>
                     <td>@forecast.TemperatureF</td>
-                    <td>@forecast.Summary</td>
+                    <td>@forecast.ApparentTemperature</td>
+                    <td>@forecast.isDay</td>
+                    <td>@forecast.Rain</td>
+                    <td>@forecast.Showers</td>
+                    <td>@forecast.Snowfall</td>
+                    <td>@forecast.Precipataion</td>
                 </tr>
             }
         </tbody>
@@ -41,17 +49,24 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        forecasts = await Http.GetFromJsonAsync<WeatherForecast[]>("sample-data/weather.json");
+        forecasts = await Http.GetFromJsonAsync<WeatherForecast[]>("https://api.open-meteo.com/v1/forecast?latitude=43.39&longitude=70.15&current=temperature_2m,apparent_temperature,is_day,precipitation,rain,showers,snowfall&wind_speed_unit=mph&temperature_unit=fahrenheit&precipitation_unit=inch");
     }
 
     public class WeatherForecast
     {
-        public DateOnly Date { get; set; }
+        public int temperature_2m { get; set; }
 
-        public int TemperatureC { get; set; }
+        public int apparent_temperature { get; set; }
 
-        public string? Summary { get; set; }
+        public bool is_day { get; set; }
 
-        public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+        public int precipataion { get; set; }
+
+        public int rain { get; set; }
+
+        public bool showers { get; set; }
+
+        public int snowfall { get; set; }
+
     }
 }
